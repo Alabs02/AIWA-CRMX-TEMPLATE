@@ -15,6 +15,7 @@ This template serves as the foundation for AIWA Agent to create, customize, and 
 - [Components](#-components)
 - [Providers](#-providers)
 - [Hooks](#-hooks)
+- [Database](#-database)
 - [Styling](#-styling)
 - [Configuration](#-configuration)
 - [Development Guidelines](#-development-guidelines)
@@ -46,6 +47,8 @@ This template serves as the foundation for AIWA Agent to create, customize, and 
 ### Data & Forms
 
 - **Drizzle ORM 0.45.1** - TypeScript ORM
+- **@libsql/client 0.17.0** - LibSQL/Turso database client
+- **Drizzle Kit 0.31.9** - Schema management and migrations
 - **date-fns** - Date manipulation
 - **react-day-picker** - Calendar component
 
@@ -89,6 +92,11 @@ aiwa-crm-template/
 │   ├── hooks/                  # Custom React hooks
 │   │   └── use-mobile.ts
 │   ├── lib/                    # Utility functions
+│   │   ├── db/                 # Database layer
+│   │   │   ├── client.ts       # LibSQL client & Drizzle instance
+│   │   │   ├── index.ts        # Database exports
+│   │   │   ├── migrations/     # Database migrations
+│   │   │   └── schema.ts       # Database schema definitions
 │   │   └── utils.ts            # cn() helper for class merging
 │   └── providers/              # React context providers
 │       ├── index.ts
@@ -96,6 +104,7 @@ aiwa-crm-template/
 ├── .gitignore
 ├── biome.json                  # Biome configuration
 ├── components.json             # shadcn/ui configuration
+├── drizzle.config.ts           # Drizzle Kit configuration
 ├── next.config.ts              # Next.js configuration
 ├── next-env.d.ts               # Next.js TypeScript declarations
 ├── package.json                # Dependencies and scripts
@@ -1315,6 +1324,345 @@ function Component() {
   return <button onClick={toggleSidebar}>Toggle</button>;
 }
 ```
+
+## 🗄️ Database
+
+### Overview
+
+The template uses **Drizzle ORM** with **Turso** (LibSQL) for a fully type-safe, edge-ready database solution. Turso provides a SQLite-compatible database that can be deployed globally with low latency.
+
+### Database Stack
+
+- **Drizzle ORM 0.45.1** - Type-safe ORM with excellent TypeScript support
+- **@libsql/client 0.17.0** - Official Turso/LibSQL client
+- **Drizzle Kit 0.31.9** - CLI for schema management and migrations
+- **SQLite dialect** - Using Turso's SQLite-compatible engine
+
+### Configuration
+
+**File**: `drizzle.config.ts`
+
+```typescript
+import { defineConfig } from "drizzle-kit";
+import { config } from "dotenv";
+
+config({ path: ".env.local" });
+
+export default defineConfig({
+  schema: "./src/lib/db/schema.ts",
+  out: "./src/lib/db/migrations",
+  dialect: "turso",
+  dbCredentials: {
+    url: process.env.TURSO_DATABASE_URL!,
+    authToken: process.env.TURSO_AUTH_TOKEN!,
+  },
+  verbose: true,
+  strict: true,
+});
+```
+
+### Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```bash
+TURSO_DATABASE_URL=libsql://your-database.turso.io
+TURSO_AUTH_TOKEN=your-auth-token
+```
+
+**Getting Turso Credentials**:
+
+1. Install Turso CLI: `curl -sSfL https://get.tur.so/install.sh | bash`
+2. Sign up: `turso auth signup`
+3. Create database: `turso db create your-database-name`
+4. Get URL: `turso db show your-database-name --url`
+5. Create token: `turso db tokens create your-database-name`
+
+### Database Client
+
+**File**: `src/lib/db/client.ts`
+
+```typescript
+import { createClient } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
+import * as schema from "./schema";
+
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
+
+export const db = drizzle(client, { schema });
+export type DB = typeof db;
+```
+
+### Database Schema
+
+**File**: `src/lib/db/schema.ts`
+
+The schema file defines your database tables using Drizzle's schema builder. It includes:
+
+- **UUID Primary Keys** - All IDs are UUIDs stored as TEXT
+- **Timestamps** - Automatic `createdAt` and `updatedAt` fields
+- **Type Safety** - Full TypeScript inference for queries
+- **SQLite Compatibility** - Uses SQLite data types (TEXT, INTEGER, REAL)
+
+**Example Schema**:
+
+```typescript
+import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+
+const timestamps = {
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+};
+
+export const users = sqliteTable("users", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull().unique(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  role: text("role", { enum: ["admin", "member", "viewer"] })
+    .notNull()
+    .default("member"),
+  avatarUrl: text("avatar_url"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  ...timestamps,
+});
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+```
+
+### Database Exports
+
+**File**: `src/lib/db/index.ts`
+
+```typescript
+export { db } from "./client";
+export type { DB } from "./client";
+export * from "./schema";
+```
+
+### Usage in Your App
+
+#### Querying Data
+
+```typescript
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+// Select all users
+const allUsers = await db.select().from(users);
+
+// Select with conditions
+const activeUsers = await db
+  .select()
+  .from(users)
+  .where(eq(users.isActive, true));
+
+// Select specific user
+const user = await db.select().from(users).where(eq(users.id, userId));
+```
+
+#### Inserting Data
+
+```typescript
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+
+// Insert single user
+const newUser = await db
+  .insert(users)
+  .values({
+    email: "user@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    role: "member",
+  })
+  .returning();
+
+// Insert multiple users
+const newUsers = await db
+  .insert(users)
+  .values([
+    { email: "user1@example.com", firstName: "John", lastName: "Doe" },
+    { email: "user2@example.com", firstName: "Jane", lastName: "Smith" },
+  ])
+  .returning();
+```
+
+#### Updating Data
+
+```typescript
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+// Update user
+const updated = await db
+  .update(users)
+  .set({
+    firstName: "Jane",
+    updatedAt: new Date().toISOString(),
+  })
+  .where(eq(users.id, userId))
+  .returning();
+```
+
+#### Deleting Data
+
+```typescript
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+// Delete user
+await db.delete(users).where(eq(users.id, userId));
+```
+
+#### Using in Server Components
+
+```typescript
+// app/users/page.tsx
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+
+export default async function UsersPage() {
+  const allUsers = await db.select().from(users);
+
+  return (
+    <div>
+      {allUsers.map((user) => (
+        <div key={user.id}>
+          {user.firstName} {user.lastName}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+#### Using in API Routes
+
+```typescript
+// app/api/users/route.ts
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const allUsers = await db.select().from(users);
+  return NextResponse.json(allUsers);
+}
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const newUser = await db.insert(users).values(body).returning();
+  return NextResponse.json(newUser[0]);
+}
+```
+
+### Migrations
+
+#### Generate Migration
+
+After modifying your schema, generate a migration:
+
+```bash
+pnpm drizzle-kit generate
+```
+
+This creates SQL migration files in `src/lib/db/migrations/`.
+
+#### Push Schema to Database
+
+Push your schema changes directly to the database (useful for development):
+
+```bash
+pnpm drizzle-kit push
+```
+
+#### Apply Migrations
+
+Apply pending migrations:
+
+```bash
+pnpm drizzle-kit migrate
+```
+
+#### Drizzle Studio
+
+Launch Drizzle Studio to visually browse and edit your database:
+
+```bash
+pnpm drizzle-kit studio
+```
+
+Opens at `https://local.drizzle.studio`
+
+### SQLite Data Type Guidelines
+
+When working with Turso/LibSQL (SQLite dialect):
+
+- **IDs**: Use `text("id")` for UUIDs
+- **Strings**: Use `text("column_name")`
+- **Numbers**: Use `integer("column_name")` for whole numbers
+- **Decimals**: Use `real("column_name")` for floating point
+- **Currency**: Use `integer("amount_cents")` for cents or `text("amount")` for precision
+- **Booleans**: Use `integer("is_active", { mode: "boolean" })`
+- **Dates**: Use `text("created_at")` with ISO strings
+- **JSON**: Use `text("data", { mode: "json" })`
+- **Enums**: Use `text("role", { enum: ["admin", "user"] })`
+
+### Best Practices
+
+1. **Always use transactions** for multiple related operations
+2. **Use prepared statements** for repeated queries
+3. **Index frequently queried columns** for better performance
+4. **Use relations** for type-safe joins
+5. **Validate data** before inserting into the database
+6. **Use `.returning()`** to get inserted/updated data
+7. **Handle errors** gracefully with try-catch blocks
+8. **Use environment variables** for database credentials
+9. **Never commit** `.env.local` to version control
+10. **Run migrations** in a CI/CD pipeline before deployment
+
+### Type Safety
+
+Drizzle provides full TypeScript inference:
+
+```typescript
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+
+// TypeScript knows the exact shape of the result
+const result = await db.select().from(users);
+// result: { id: string; email: string; firstName: string; ... }[]
+
+// TypeScript validates insert data
+await db.insert(users).values({
+  email: "test@example.com",
+  firstName: "John",
+  lastName: "Doe",
+  // TypeScript error if required fields are missing
+});
+```
+
+### Resources
+
+- [Drizzle ORM Documentation](https://orm.drizzle.team/)
+- [Turso Documentation](https://docs.turso.tech/)
+- [Drizzle Kit CLI](https://orm.drizzle.team/kit-docs/overview)
+- [LibSQL Client](https://github.com/tursodatabase/libsql-client-ts)
 
 ## 🎨 Styling
 
