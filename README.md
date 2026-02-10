@@ -130,6 +130,10 @@ aiwa-crm-template/
 # Install dependencies
 pnpm install
 
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your actual values
+
 # Run development server
 pnpm dev
 
@@ -145,6 +149,12 @@ pnpm lint
 # Format code
 pnpm format
 ```
+
+**Important**: Before running the development server, make sure to:
+
+1. Copy `.env.example` to `.env.local`
+2. Fill in your Turso database credentials (see [Database](#-database) section)
+3. Configure any optional environment variables as needed
 
 ### Development Server
 
@@ -1625,31 +1635,21 @@ export async function POST(request: Request) {
 
 ### Migrations
 
-#### Generate Migration
-
-After modifying your schema, generate a migration:
-
-```bash
-pnpm drizzle-kit generate
-```
-
-This creates SQL migration files in `src/lib/db/migrations/`.
+Turso uses a push-based workflow instead of traditional migration files. The schema is managed by the Logic Architect Agent.
 
 #### Push Schema to Database
 
-Push your schema changes directly to the database (useful for development):
+After the Logic Architect Agent modifies your schema in `src/lib/db/schema.ts`, push changes directly to your Turso database:
 
 ```bash
 pnpm drizzle-kit push
 ```
 
-#### Apply Migrations
+This command:
 
-Apply pending migrations:
-
-```bash
-pnpm drizzle-kit migrate
-```
+- Compares your local schema with the remote database
+- Generates and applies the necessary SQL changes
+- Updates your Turso database instantly
 
 #### Drizzle Studio
 
@@ -1660,6 +1660,8 @@ pnpm drizzle-kit studio
 ```
 
 Opens at `https://local.drizzle.studio`
+
+**Note**: The schema file (`src/lib/db/schema.ts`) is managed by the Logic Architect Agent. Manual edits should be made carefully and pushed using `drizzle-kit push`.
 
 ### SQLite Data Type Guidelines
 
@@ -1924,21 +1926,19 @@ pnpm dlx shadcn@latest add [component-name]
 pnpm dlx shadcn@latest add command
 ```
 
-### Database Setup (Drizzle ORM)
+### Database Setup (Drizzle ORM + Turso)
 
-The template includes Drizzle ORM. To set up:
+The template includes Drizzle ORM with Turso (LibSQL) database. To set up:
 
-1. Create schema in `src/db/schema.ts`
-2. Configure database connection
-3. Run migrations with `drizzle-kit`
+1. Schema lives in `src/lib/db/schema.ts` — managed by Logic Architect Agent
+2. Configure Turso credentials in `.env.local` (see [Database](#-database) section)
+3. Push schema to database:
 
 ```bash
-# Generate migrations
-pnpm drizzle-kit generate
-
-# Run migrations
-pnpm drizzle-kit migrate
+pnpm drizzle-kit push
 ```
+
+**Note**: Turso uses a push-based workflow. The `drizzle-kit push` command compares your schema with the remote database and applies changes directly.
 
 ## 🏗 Building for Production
 
