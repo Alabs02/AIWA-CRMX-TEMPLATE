@@ -101,6 +101,7 @@ aiwa-crm-template/
 │   └── providers/              # React context providers
 │       ├── index.ts
 │       └── theme.tsx           # Theme provider for dark mode
+├── .env.example                # Environment variables template
 ├── .gitignore
 ├── biome.json                  # Biome configuration
 ├── components.json             # shadcn/ui configuration
@@ -1363,12 +1364,56 @@ export default defineConfig({
 
 ### Environment Variables
 
-Create a `.env.local` file in the root directory:
+The template includes a `.env.example` file that documents all required and optional environment variables. Copy it to create your local environment file:
 
 ```bash
-TURSO_DATABASE_URL=libsql://your-database.turso.io
-TURSO_AUTH_TOKEN=your-auth-token
+cp .env.example .env.local
 ```
+
+**Complete Environment Variables**:
+
+```bash
+# ─── Database — Turso (LibSQL) ────────────────────────────────────────────────
+# Get these from: https://app.turso.tech → your database → Connect
+TURSO_DATABASE_URL=libsql://your-database-name.turso.io
+TURSO_AUTH_TOKEN=
+
+# ─── Next.js ──────────────────────────────────────────────────────────────────
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_TELEMETRY_DISABLED=1
+
+# ─── Email — Resend (optional) ────────────────────────────────────────────────
+# Get API key from: https://resend.com/api-keys
+RESEND_API_KEY=
+EMAIL_FROM=noreply@yourdomain.com
+
+# ─── Automations ──────────────────────────────────────────────────────────────
+# Generate a random secret: openssl rand -base64 32
+AUTOMATION_SECRET=
+CRON_SECRET=
+```
+
+**Environment Variable Descriptions**:
+
+**Database (Required)**:
+
+- `TURSO_DATABASE_URL` - Your Turso database connection URL
+- `TURSO_AUTH_TOKEN` - Authentication token for Turso database access
+
+**Next.js**:
+
+- `NEXT_PUBLIC_APP_URL` - Public URL of your application (used for absolute URLs)
+- `NEXT_TELEMETRY_DISABLED` - Disable Next.js telemetry (set to `1` to disable)
+
+**Email (Optional)**:
+
+- `RESEND_API_KEY` - API key from Resend for sending emails
+- `EMAIL_FROM` - Default sender email address
+
+**Automations (Optional)**:
+
+- `AUTOMATION_SECRET` - Secret key for securing automation endpoints
+- `CRON_SECRET` - Secret key for securing cron job endpoints
 
 **Getting Turso Credentials**:
 
@@ -1377,6 +1422,13 @@ TURSO_AUTH_TOKEN=your-auth-token
 3. Create database: `turso db create your-database-name`
 4. Get URL: `turso db show your-database-name --url`
 5. Create token: `turso db tokens create your-database-name`
+
+**Security Notes**:
+
+- Never commit `.env.local` to version control (it's in `.gitignore`)
+- Use different values for development, staging, and production
+- Rotate secrets regularly in production environments
+- Generate strong secrets using: `openssl rand -base64 32`
 
 ### Database Client
 
