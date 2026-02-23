@@ -1,18 +1,14 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 
 /**
- * LibSQL client configured from environment variables.
- * - TURSO_DATABASE_URL  — libsql://your-db.turso.io
- * - TURSO_AUTH_TOKEN    — token from Turso dashboard
+ * Neon PostgreSQL client configured from environment variables.
+ * - DATABASE_URL — postgresql://[user]:[password]@[host]/[database]?sslmode=require
  *
- * Both are injected by the AIWA deployment workflow.
+ * Get this from: https://console.neon.tech → your project → Connection Details
  */
-const client = createClient({
-  url: process.env.TURSO_DATABASE_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN!,
-});
+const client = neon(process.env.DATABASE_URL!);
 
 export const db = drizzle(client, { schema });
 export type DB = typeof db;

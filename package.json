@@ -15,7 +15,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.0",
+    "@neondatabase/serverless": "^0.10.3",
     "@tabler/icons-react": "^3.36.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
