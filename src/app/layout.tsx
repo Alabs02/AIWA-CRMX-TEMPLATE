@@ -39,8 +39,8 @@ export default function RootLayout({
         <Toaster />
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem
+          defaultTheme="system"
+          enableSystem  
           disableTransitionOnChange
         >
           <TooltipProvider>{children}</TooltipProvider>
