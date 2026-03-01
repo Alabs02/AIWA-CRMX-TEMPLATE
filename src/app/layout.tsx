@@ -22,8 +22,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AIWA Template",
-  description: "This template will used by AIWA agent to build custom CRMs for Agencies",
+  title: "Falcon Next JS Template",
+  description: "This template will used by Falcon (Agent)  to build custom CRMs for Agencies",
 };
 
 export default function RootLayout({
@@ -40,7 +40,7 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
-          enableSystem  
+          enableSystem
           disableTransitionOnChange
         >
           <TooltipProvider>{children}</TooltipProvider>

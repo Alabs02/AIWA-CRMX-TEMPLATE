@@ -64,7 +64,7 @@
 :root {
   --radius: 0.625rem;
 
-  /* AIWA brand */
+  /* Falcon brand */
   --brand-primary: oklch(72.348% 0.17235 53.784);
   --brand-dim: oklch(72.348% 0.17235 53.784 / 0.12);
   --brand-glow: oklch(72.348% 0.17235 53.784 / 0.35);

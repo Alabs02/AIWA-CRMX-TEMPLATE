@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
-          // Allow embedding in AIWA builder iframe from localhost + production domains
+          // Allow embedding in Falcon builder iframe from localhost + production domains
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           {
             key: "Content-Security-Policy",
@@ -28,8 +28,8 @@ const nextConfig: NextConfig = {
               "frame-ancestors",
               "'self'",
               "localhost:*",
-              "*.aiwa.build",
-              "aiwa.build",
+              "*.falcon.build",
+              "falcon.build",
               "*.vercel.app",
             ].join(" "),
           },

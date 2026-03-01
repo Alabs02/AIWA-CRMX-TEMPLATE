@@ -1,10 +1,10 @@
-# AIWA CRM Template
+# Falcon CRM Template
 
-> A production-ready Next.js template designed for the AIWA Agent to build custom CRMs for agencies. Built with TypeScript, Tailwind CSS v4, shadcn/ui, and modern React patterns.
+> A production-ready Next.js template designed for the Falcon Agent to build custom CRMs for agencies. Built with TypeScript, Tailwind CSS v4, shadcn/ui, and modern React patterns.
 
 ## 🎯 Purpose
 
-This template serves as the foundation for AIWA Agent to create, customize, and build beautiful, accessible CRMs for agencies. It provides a complete design system, pre-built components, and a scalable architecture that can be extended for any CRM use case.
+This template serves as the foundation for Falcon Agent to create, customize, and build beautiful, accessible CRMs for agencies. It provides a complete design system, pre-built components, and a scalable architecture that can be extended for any CRM use case.
 
 ## 📋 Table of Contents
 
@@ -68,7 +68,7 @@ This template serves as the foundation for AIWA Agent to create, customize, and 
 ## 📁 Project Structure
 
 ```
-aiwa-crm-template/
+falcon-crm-template/
 ├── .next/                      # Next.js build output
 ├── node_modules/               # Dependencies
 ├── public/                     # Static assets
@@ -1875,7 +1875,7 @@ Next.js configuration (currently minimal, ready for customization).
 
 ## 📚 Development Guidelines
 
-### For AIWA Agent
+### For Falcon Agent
 
 When building CRMs with this template:
 
@@ -2005,7 +2005,7 @@ NEXT_PUBLIC_API_URL=
 
 ## 🤝 Contributing
 
-This template is maintained for AIWA Agent usage. When extending:
+This template is maintained for Falcon Agent usage. When extending:
 
 1. Maintain existing patterns and conventions
 2. Document new components thoroughly
@@ -2015,7 +2015,7 @@ This template is maintained for AIWA Agent usage. When extending:
 
 ## 📝 License
 
-Private template for AIWA Agent usage.
+Private template for Falcon Agent usage.
 
 **Author**: usmanunfolds@alabura.com
 
